@@ -175,43 +175,128 @@ viewer.scene.globe.enableLighting = true;
 // Approximate IFT profile based on SpaceX webcast telemetry
 
 const BOOSTER = [
-  [   0, -97.157,  25.997,     20],
-  [  30, -97.050,  25.990,   5000],
-  [  60, -96.850,  25.950,  12000],
-  [  90, -96.500,  25.850,  30000],
-  [ 130, -96.100,  25.700,  52000],
-  [ 170, -95.700,  25.500,  70000],
-  [ 210, -95.580,  25.400,  82000],
-  [ 260, -95.550,  25.350,  90000],  // apex / flip
-  [ 310, -95.900,  25.550,  70000],
-  [ 360, -96.500,  25.800,  30000],
-  [ 400, -97.000,  25.960,   5000],
-  [ 420, -97.157,  25.997,      0],  // Mechazilla catch
+  [   0, -97.157, 25.997,    20],  // Liftoff
+  [  15, -97.120, 25.993,  1500],
+  [  30, -97.050, 25.988,  5500],
+  [  45, -96.960, 25.975,  9800],  // Max-Q
+  [  60, -96.845, 25.958, 13500],
+  [  80, -96.690, 25.928, 22000],
+  [ 100, -96.490, 25.880, 34000],
+  [ 120, -96.270, 25.810, 47000],
+  [ 140, -96.040, 25.715, 59000],
+  [ 160, -95.810, 25.600, 68000],
+  [ 164, -95.760, 25.568, 69000],  // MECO
+  [ 170, -95.710, 25.520, 70500],  // Stage Sep / Boostback Ignition
+  [ 185, -95.648, 25.477, 74000],  // Boostback burn
+  [ 200, -95.595, 25.440, 78500],
+  [ 220, -95.560, 25.408, 84000],
+  [ 240, -95.548, 25.385, 88500],
+  [ 255, -95.548, 25.372, 90500],  // Apex
+  [ 270, -95.572, 25.378, 88500],  // Descending
+  [ 290, -95.710, 25.450, 79000],
+  [ 310, -95.960, 25.560, 63000],
+  [ 330, -96.220, 25.678, 45000],  // Entry burn start
+  [ 350, -96.490, 25.800, 27000],
+  [ 370, -96.750, 25.900, 13000],
+  [ 390, -96.980, 25.958,  5500],
+  [ 408, -97.110, 25.987,  1400],
+  [ 420, -97.157, 25.997,     0],  // Mechazilla catch
 ];
 
 const SHIP = [
-  [    0, -97.157,  25.997,     20],
-  [   60, -96.850,  25.950,  12000],
-  [  130, -96.100,  25.700,  52000],
-  [  170, -95.700,  25.500,  70000],  // stage sep
-  [  220, -94.800,  25.300, 100000],
-  [  300, -93.000,  24.800, 130000],
-  [  400, -90.000,  24.000, 148000],
-  [  510, -85.000,  22.500, 155000],  // SECO
-  [  700, -75.000,  18.000, 158000],
-  [  900, -60.000,  10.000, 160000],
-  [ 1400,  10.000,   0.000, 159000],
-  [ 1800,  30.000,  -8.000, 157000],
-  [ 2200,  55.000, -14.000, 154000],
-  [ 2700,  72.000, -20.000, 148000],
-  [ 3000,  78.000, -22.000, 130000],
-  [ 3300,  85.000, -25.000,  80000],  // reentry burn
-  [ 3600,  89.000, -27.000,  30000],
-  [ 3900,  90.000, -28.000,      0],  // splashdown
+  [    0, -97.157, 25.997,    20],  // Liftoff
+  [   15, -97.120, 25.993,  1500],
+  [   30, -97.050, 25.988,  5500],
+  [   45, -96.960, 25.975,  9800],  // Max-Q
+  [   60, -96.845, 25.958, 13500],
+  [   80, -96.690, 25.928, 22000],
+  [  100, -96.490, 25.880, 34000],
+  [  120, -96.270, 25.810, 47000],
+  [  140, -96.040, 25.715, 59000],
+  [  160, -95.810, 25.600, 68000],
+  [  164, -95.760, 25.568, 69000],  // MECO / Hot-Stage
+  [  170, -95.710, 25.520, 70500],  // Stage Sep
+  [  200, -95.010, 25.220, 88000],
+  [  240, -93.820, 24.720,112000],
+  [  290, -92.120, 23.920,133000],
+  [  350, -89.830, 22.820,145000],
+  [  430, -86.900, 21.300,152000],
+  [  510, -83.400, 19.200,155000],  // SECO
+  [  650, -76.200, 15.100,161000],
+  [  800, -67.500,  9.600,164500],
+  [  950, -57.500,  3.200,166000],  // Apogee
+  [ 1100, -46.800, -3.400,164500],
+  [ 1300, -33.200,-10.400,162000],
+  [ 1500, -17.800,-15.900,160000],
+  [ 1700,  -1.200,-20.000,157000],
+  [ 1900,  14.800,-22.500,155000],
+  [ 2100,  30.000,-24.000,152000],
+  [ 2300,  44.200,-25.000,149000],
+  [ 2500,  57.000,-25.800,145000],
+  [ 2700,  68.000,-26.400,140000],
+  [ 2900,  76.200,-27.000,126000],
+  [ 3050,  80.800,-27.400,107000],
+  [ 3150,  83.500,-27.700, 87000],  // Reentry heating
+  [ 3280,  86.500,-27.900, 55000],  // Reentry burn
+  [ 3420,  88.300,-28.000, 24000],
+  [ 3580,  89.300,-28.000,  9000],
+  [ 3750,  89.800,-28.000,  2500],
+  [ 3900,  90.000,-28.000,     0],  // Splashdown
 ];
 
 function toCzmlPositions(wpts) {
   return wpts.flatMap(([t, lon, lat, alt]) => [t, lon, lat, alt]);
+}
+
+function interpolatePos(wpts, tSec) {
+  if (tSec <= wpts[0][0]) return [wpts[0][1], wpts[0][2], wpts[0][3]];
+  for (let i = 1; i < wpts.length; i++) {
+    const [t0, lon0, lat0, alt0] = wpts[i - 1];
+    const [t1, lon1, lat1, alt1] = wpts[i];
+    if (tSec <= t1) {
+      const f = (tSec - t0) / (t1 - t0);
+      return [lon0 + f*(lon1-lon0), lat0 + f*(lat1-lat0), alt0 + f*(alt1-alt0)];
+    }
+  }
+  const w = wpts[wpts.length - 1];
+  return [w[1], w[2], w[3]];
+}
+
+// [label, T+sec, waypoint array, pixel label offset [x,y]]
+const FLIGHT_EVENTS = [
+  ['Max-Q',          45,   SHIP,    [  0, -20]],
+  ['MECO',          164,   BOOSTER, [-68, -14]],
+  ['Stage Sep',     170,   SHIP,    [ 68, -14]],
+  ['Boostback Burn',189,   BOOSTER, [  0,  18]],
+  ['Entry Burn',    330,   BOOSTER, [  0, -20]],
+  ['Ship SECO',     510,   SHIP,    [  0, -20]],
+  ['Reentry Burn', 3280,   SHIP,    [  0,  18]],
+  ['Splashdown',   3900,   SHIP,    [  0, -20]],
+];
+
+function addEventMarkers() {
+  FLIGHT_EVENTS.forEach(([label, tSec, wpts, [ox, oy]]) => {
+    const [lon, lat, alt] = interpolatePos(wpts, tSec);
+    viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
+      point: {
+        color: Cesium.Color.WHITE.withAlpha(0.9),
+        pixelSize: 6,
+        outlineColor: Cesium.Color.fromCssColorString('#0d1117'),
+        outlineWidth: 1.5,
+      },
+      label: {
+        text: label,
+        font: '11px system-ui, -apple-system, sans-serif',
+        fillColor: Cesium.Color.fromCssColorString('#c9d1d9'),
+        outlineColor: Cesium.Color.fromCssColorString('#0d1117'),
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(ox, oy),
+        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8_000_000),
+      }
+    });
+  });
 }
 
 function buildCzml(t0Iso, name) {
@@ -264,7 +349,7 @@ function buildCzml(t0Iso, name) {
         epoch: t0Iso,
         cartographicDegrees: toCzmlPositions(BOOSTER),
         interpolationAlgorithm: 'LAGRANGE',
-        interpolationDegree: 5
+        interpolationDegree: 3
       }
     },
     {
@@ -287,7 +372,7 @@ function buildCzml(t0Iso, name) {
         epoch: t0Iso,
         cartographicDegrees: toCzmlPositions(SHIP),
         interpolationAlgorithm: 'LAGRANGE',
-        interpolationDegree: 5
+        interpolationDegree: 3
       }
     }
   ];
@@ -344,6 +429,7 @@ async function init() {
     document.title = `StarshipIt — ${launch.name}`;
 
     addPlannedPaths();
+    addEventMarkers();
 
     const czml = buildCzml(launch.net, launch.name);
     const ds   = await Cesium.CzmlDataSource.load(czml);
