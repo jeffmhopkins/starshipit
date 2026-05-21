@@ -249,8 +249,8 @@ function buildCzml(t0Iso, name) {
       availability: `${t0Iso}/${endBooster}`,
       path: {
         show: true,
-        material: { solidColor: { color: { rgba: [88,166,255,210] } } },
-        width: 2,
+        material: { solidColor: { color: { rgba: [88,166,255,255] } } },
+        width: 4,
         leadTime: 0,
         trailTime: 7200
       },
@@ -272,8 +272,8 @@ function buildCzml(t0Iso, name) {
       availability: `${t0Iso}/${endShip}`,
       path: {
         show: true,
-        material: { solidColor: { color: { rgba: [63,185,80,210] } } },
-        width: 2,
+        material: { solidColor: { color: { rgba: [63,185,80,255] } } },
+        width: 4,
         leadTime: 0,
         trailTime: 7200
       },
@@ -291,6 +291,30 @@ function buildCzml(t0Iso, name) {
       }
     }
   ];
+}
+
+// ── Ghost planned-trajectory polylines ──────────────────────────────────
+function addPlannedPaths() {
+  const toCartesian = wpts =>
+    wpts.map(([, lon, lat, alt]) => Cesium.Cartesian3.fromDegrees(lon, lat, alt));
+
+  viewer.entities.add({
+    polyline: {
+      positions: toCartesian(BOOSTER),
+      width: 1.5,
+      material: Cesium.Color.fromBytes(88, 166, 255, 80),
+      clampToGround: false,
+    }
+  });
+
+  viewer.entities.add({
+    polyline: {
+      positions: toCartesian(SHIP),
+      width: 1.5,
+      material: Cesium.Color.fromBytes(63, 185, 80, 80),
+      clampToGround: false,
+    }
+  });
 }
 
 // ── T± overlay clock ────────────────────────────────────────────────────
@@ -318,6 +342,8 @@ async function init() {
     t0Ms = new Date(launch.net).getTime();
     document.getElementById('mission-name').textContent = launch.name;
     document.title = `StarshipIt — ${launch.name}`;
+
+    addPlannedPaths();
 
     const czml = buildCzml(launch.net, launch.name);
     const ds   = await Cesium.CzmlDataSource.load(czml);
