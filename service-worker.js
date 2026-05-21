@@ -1,22 +1,47 @@
-const CACHE_NAME = 'starshipit-v1';
-const PRECACHE = ['/', '/index.html', '/manifest.json', '/logo-192x192.png', '/logo-512x512.png'];
+const CACHE_NAME = 'starshipit-v2';
+const PRECACHE = ['/manifest.json', '/logo-192x192.png', '/logo-512x512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => Promise.allSettled(
-        PRECACHE.map(url => cache.add(url).catch(err => console.warn(`Failed to cache ${url}:`, err)))
-      ))
+      .then(cache => Promise.allSettled(PRECACHE.map(url => cache.add(url).catch(() => {}))))
       .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+  // Delete every cache that isn't the current version
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', event => {
+  const req = event.request;
+
+  // HTML pages: network-first so new deploys are visible immediately.
+  // Falls back to cache when offline.
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          caches.open(CACHE_NAME).then(c => c.put(req, res.clone()));
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Static assets (icons, manifest): cache-first, populate on miss
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+    caches.match(req).then(cached => cached ||
+      fetch(req).then(res => {
+        caches.open(CACHE_NAME).then(c => c.put(req, res.clone()));
+        return res;
+      })
+    )
   );
 });
