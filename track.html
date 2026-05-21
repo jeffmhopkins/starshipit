@@ -508,11 +508,40 @@ function tickOverlay() {
 }
 setInterval(tickOverlay, 1000);
 
+// ── Cached launch fetch ──────────────────────────────────────────────────
+const LAUNCH_CACHE_KEY = 'starshipit_launch_v1';
+const LAUNCH_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+async function fetchLaunch() {
+  try {
+    const raw = localStorage.getItem(LAUNCH_CACHE_KEY);
+    if (raw) {
+      const { ts, data } = JSON.parse(raw);
+      if (Date.now() - ts < LAUNCH_CACHE_TTL) return data;
+    }
+  } catch {}
+
+  try {
+    const res = await fetch(
+      'https://ll.thespacedevs.com/2.2.0/launch/upcoming/?search=Starship&limit=1'
+    );
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+    try { localStorage.setItem(LAUNCH_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+    return data;
+  } catch (err) {
+    try {
+      const raw = localStorage.getItem(LAUNCH_CACHE_KEY);
+      if (raw) return JSON.parse(raw).data;
+    } catch {}
+    throw err;
+  }
+}
+
 // ── Init ────────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const res  = await fetch('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?search=Starship&limit=1');
-    const data = await res.json();
+    const data = await fetchLaunch();
     const launch = data.results[0];
 
     t0Ms = new Date(launch.net).getTime();

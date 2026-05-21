@@ -429,14 +429,42 @@ function showChecklist() {
   updateDisplay();
 }
 
-async function init() {
-  const statusEl = document.getElementById('status-msg');
+const LAUNCH_CACHE_KEY = 'starshipit_launch_v1';
+const LAUNCH_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+async function fetchLaunch() {
+  // Return cached data if fresh enough
+  try {
+    const raw = localStorage.getItem(LAUNCH_CACHE_KEY);
+    if (raw) {
+      const { ts, data } = JSON.parse(raw);
+      if (Date.now() - ts < LAUNCH_CACHE_TTL) return data;
+    }
+  } catch {}
+
   try {
     const res = await fetch(
       'https://ll.thespacedevs.com/2.2.0/launch/upcoming/?search=Starship&limit=1'
     );
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    if (!res.ok) throw new Error(`API ${res.status}`);
     const data = await res.json();
+    if (!data.results?.length) throw new Error('No upcoming launches');
+    try { localStorage.setItem(LAUNCH_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+    return data;
+  } catch (err) {
+    // On rate-limit or network failure, serve stale cache rather than error
+    try {
+      const raw = localStorage.getItem(LAUNCH_CACHE_KEY);
+      if (raw) return JSON.parse(raw).data;
+    } catch {}
+    throw err;
+  }
+}
+
+async function init() {
+  const statusEl = document.getElementById('status-msg');
+  try {
+    const data = await fetchLaunch();
     if (!data.results?.length) throw new Error('No upcoming Starship launches found');
 
     const launch = data.results[0];
