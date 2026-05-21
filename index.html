@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>StarshipIt</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StarshipIt">
+  <link rel="apple-touch-icon" href="/logo-192x192.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --green: #3fb950;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-variant-numeric: tabular-nums;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-nav {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+    .header-nav .accent { color: var(--accent); }
+    .header-bell {
+      width: 22px; height: 22px;
+      color: var(--muted);
+    }
+
+    /* ── Mission name ── */
+    .mission-name {
+      font-size: 26px;
+      font-weight: 700;
+      padding: 14px 16px 4px;
+      color: var(--text);
+      min-height: 52px;
+    }
+
+    /* ── Countdown ── */
+    .countdown-section {
+      margin: 12px 16px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .countdown-display {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+    }
+    .countdown-prefix {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 5px;
+      min-width: 34px;
+      flex-shrink: 0;
+    }
+    .digit-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .group-label {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .digits { display: flex; gap: 3px; }
+    .digit {
+      width: 34px;
+      height: 46px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'Courier New', Courier, monospace;
+    }
+    .colon {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--muted);
+      padding-bottom: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── Timeline ── */
+    .timeline-list {
+      list-style: none;
+      padding: 0 16px 88px;
+      position: relative;
+    }
+    .timeline-list::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      top: 0;
+      bottom: 88px;
+      width: 1px;
+      background: var(--border);
+    }
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .evt-circle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid var(--muted);
+      background: var(--bg);
+      position: relative;
+      z-index: 1;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .evt-circle.done {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .evt-label {
+      flex: 1;
+      font-size: 15px;
+      color: var(--text);
+      transition: color 0.3s;
+    }
+    .evt-label.done { color: var(--muted); }
+    .evt-time {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: 'Courier New', Courier, monospace;
+      white-space: nowrap;
+    }
+    .timeline-item.upcoming .evt-circle { border-color: var(--accent); }
+    .timeline-item.upcoming .evt-label  { color: var(--accent); }
+    .timeline-item.upcoming .evt-time   { color: var(--accent); }
+
+    /* ── Checklist ── */
+    .checklist-header {
+      padding: 6px 16px 14px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .checklist-list {
+      list-style: none;
+      padding: 0 16px 88px;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .chk-circle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid var(--muted);
+    }
+
+    /* ── Status / error ── */
+    #status-msg {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* ── Views ── */
+    #timeline-view, #checklist-view { display: none; }
+    #timeline-view.active, #checklist-view.active { display: block; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 19px; line-height: 1; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-nav">← <span class="accent">SPACEX</span> ›</div>
+  <svg class="header-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+</header>
+
+<h1 class="mission-name" id="mission-name">Loading…</h1>
+
+<div class="countdown-section">
+  <div class="countdown-display">
+    <div class="countdown-prefix" id="cd-sign">T-</div>
+
+    <div class="digit-group" id="days-group" style="display:none">
+      <div class="group-label">DAYS</div>
+      <div class="digits">
+        <div class="digit" id="d-d1">0</div>
+        <div class="digit" id="d-d2">0</div>
+      </div>
+    </div>
+    <div class="colon" id="days-colon" style="display:none">:</div>
+
+    <div class="digit-group">
+      <div class="group-label">HOUR</div>
+      <div class="digits">
+        <div class="digit" id="d-h1">—</div>
+        <div class="digit" id="d-h2">—</div>
+      </div>
+    </div>
+    <div class="colon">:</div>
+    <div class="digit-group">
+      <div class="group-label">MIN</div>
+      <div class="digits">
+        <div class="digit" id="d-m1">—</div>
+        <div class="digit" id="d-m2">—</div>
+      </div>
+    </div>
+    <div class="colon">:</div>
+    <div class="digit-group">
+      <div class="group-label">SEC</div>
+      <div class="digits">
+        <div class="digit" id="d-s1">—</div>
+        <div class="digit" id="d-s2">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="timeline-view">
+  <ul class="timeline-list" id="timeline-list"></ul>
+</div>
+
+<div id="checklist-view">
+  <div class="checklist-header">Pre-Launch Preparation</div>
+  <ul class="checklist-list" id="checklist-list"></ul>
+</div>
+
+<div id="status-msg">Fetching launch data…</div>
+
+<nav class="bottom-nav">
+  <div class="nav-item active"><span class="nav-icon">🏠</span><span>Home</span></div>
+  <div class="nav-item"><span class="nav-icon">🚀</span><span>Launches</span></div>
+  <div class="nav-item"><span class="nav-icon">🛸</span><span>Vehicles</span></div>
+  <div class="nav-item"><span class="nav-icon">⭐</span><span>Starship</span></div>
+  <div class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></div>
+</nav>
+
+<script>
+const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+
+const TIMELINE_EVENTS = [
+  { label: 'Go for Prop Load',  offsetSec: -(50*60)      },
+  { label: 'Ship LOX Load',     offsetSec: -(38*60 + 53) },
+  { label: 'Booster LOX Load',  offsetSec: -(35*60)      },
+  { label: 'Booster CH4 Load',  offsetSec: -(34*60 + 43) },
+  { label: 'Ship CH4 Load',     offsetSec: -(32*60 + 59) },
+  { label: 'Engine Chill',      offsetSec: -(21*60 + 30) },
+  { label: 'Booster Loaded',    offsetSec: -(2*60 + 50)  },
+  { label: 'Ship Prop Loaded',  offsetSec: -(2*60 + 10)  },
+  { label: 'FD Go for Launch',  offsetSec: -30           },
+  { label: 'Flame Diverter',    offsetSec: -17           },
+  { label: 'Engine Ignition',   offsetSec: -3            },
+  { label: 'Liftoff',           offsetSec: 0             },
+  { label: 'Max-Q',             offsetSec: 45            },
+  { label: 'MECO',              offsetSec: 2*60 + 22     },
+  { label: 'Hot-Staging',       offsetSec: 2*60 + 44     },
+  { label: 'Boostback Start',   offsetSec: 3*60 + 9      },
+];
+
+const CHECKLIST = [
+  'Range clear & FAA license active',
+  'Propellant systems nominal',
+  'Flight termination system armed',
+  'Weather within constraints',
+  'Ship and booster fully stacked',
+  'Ground support equipment ready',
+  'Communication systems verified',
+  'Launch director GO/NO-GO poll',
+];
+
+let t0 = null;
+
+function p2(n) { return String(n).padStart(2, '0'); }
+
+function formatOffset(sec) {
+  const sign = sec >= 0 ? '+' : '-';
+  const a = Math.abs(sec);
+  return `T${sign}${p2(Math.floor(a / 3600))}:${p2(Math.floor((a % 3600) / 60))}:${p2(a % 60)}`;
+}
+
+function setDigits(ms) {
+  const totalSec = Math.floor(Math.abs(ms) / 1000);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+
+  const dg = document.getElementById('days-group');
+  const dc = document.getElementById('days-colon');
+  if (d > 0) {
+    dg.style.display = '';
+    dc.style.display = '';
+    const ds = p2(Math.min(d, 99));
+    document.getElementById('d-d1').textContent = ds[0];
+    document.getElementById('d-d2').textContent = ds[1];
+  } else {
+    dg.style.display = 'none';
+    dc.style.display = 'none';
+  }
+
+  const hs = p2(h), ms2 = p2(m), ss = p2(s);
+  document.getElementById('d-h1').textContent = hs[0];
+  document.getElementById('d-h2').textContent = hs[1];
+  document.getElementById('d-m1').textContent = ms2[0];
+  document.getElementById('d-m2').textContent = ms2[1];
+  document.getElementById('d-s1').textContent = ss[0];
+  document.getElementById('d-s2').textContent = ss[1];
+}
+
+function updateDisplay() {
+  if (!t0) return;
+  const now = Date.now();
+  const delta = t0 - now;
+  document.getElementById('cd-sign').textContent = delta >= 0 ? 'T-' : 'T+';
+  setDigits(delta);
+
+  const items = document.querySelectorAll('.timeline-item');
+  let markedNext = false;
+  items.forEach((item, i) => {
+    const ev = TIMELINE_EVENTS[i];
+    const eventTime = t0 + ev.offsetSec * 1000;
+    const done = now >= eventTime;
+    const circle = item.querySelector('.evt-circle');
+    const label  = item.querySelector('.evt-label');
+
+    if (done) {
+      circle.classList.add('done');
+      label.classList.add('done');
+      item.classList.remove('upcoming');
+    } else {
+      circle.classList.remove('done');
+      label.classList.remove('done');
+      if (!markedNext) {
+        item.classList.add('upcoming');
+        markedNext = true;
+      } else {
+        item.classList.remove('upcoming');
+      }
+    }
+  });
+}
+
+function renderTimeline() {
+  const list = document.getElementById('timeline-list');
+  list.innerHTML = '';
+  TIMELINE_EVENTS.forEach(ev => {
+    const li = document.createElement('li');
+    li.className = 'timeline-item';
+    li.innerHTML =
+      `<div class="evt-circle"></div>` +
+      `<span class="evt-label">${ev.label}</span>` +
+      `<span class="evt-time">${formatOffset(ev.offsetSec)}</span>`;
+    list.appendChild(li);
+  });
+}
+
+function renderChecklist() {
+  const list = document.getElementById('checklist-list');
+  list.innerHTML = '';
+  CHECKLIST.forEach(text => {
+    const li = document.createElement('li');
+    li.className = 'checklist-item';
+    li.innerHTML = `<div class="chk-circle"></div><span>${text}</span>`;
+    list.appendChild(li);
+  });
+}
+
+function showTimeline() {
+  document.getElementById('timeline-view').classList.add('active');
+  document.getElementById('checklist-view').classList.remove('active');
+  renderTimeline();
+  updateDisplay();
+  setTimeout(() => {
+    const next = document.querySelector('.timeline-item.upcoming');
+    if (next) next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 350);
+}
+
+function showChecklist() {
+  document.getElementById('checklist-view').classList.add('active');
+  document.getElementById('timeline-view').classList.remove('active');
+  renderChecklist();
+  updateDisplay();
+}
+
+async function init() {
+  const statusEl = document.getElementById('status-msg');
+  try {
+    const res = await fetch(
+      'https://ll.thespacedevs.com/2.2.0/launch/upcoming/?search=Starship&limit=1'
+    );
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const data = await res.json();
+    if (!data.results?.length) throw new Error('No upcoming Starship launches found');
+
+    const launch = data.results[0];
+    t0 = new Date(launch.net).getTime();
+    document.getElementById('mission-name').textContent = launch.name;
+    statusEl.style.display = 'none';
+
+    if (t0 - Date.now() <= TWO_DAYS_MS) {
+      showTimeline();
+    } else {
+      showChecklist();
+    }
+    setInterval(updateDisplay, 1000);
+  } catch (err) {
+    statusEl.textContent = `⚠️ ${err.message}`;
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+}
+
+init();
+</script>
+</body>
+</html>
