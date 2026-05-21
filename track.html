@@ -91,8 +91,9 @@
     /* ── Bottom legend ── */
     #legend {
       position: absolute;
-      bottom: 20px;
+      bottom: max(20px, calc(14px + env(safe-area-inset-bottom)));
       left: 16px;
+      z-index: 1000;
       background: rgba(13,17,23,0.75);
       border: 1px solid rgba(48,54,61,0.8);
       border-radius: 8px;
@@ -122,11 +123,12 @@
     /* ── View controls ── */
     #view-controls {
       position: absolute;
-      bottom: 20px;
+      bottom: max(20px, calc(14px + env(safe-area-inset-bottom)));
       right: 16px;
       display: flex;
       flex-direction: column;
       gap: 5px;
+      z-index: 1000;
     }
     .view-btn {
       background: rgba(13,17,23,0.80);
