@@ -450,39 +450,21 @@ function getActiveVehicle() {
     : { entityId: 'ship',    wpts: SHIP };
 }
 
-function getHeadingAtTime(wpts, tSec) {
-  const first = wpts[0][0], last = wpts[wpts.length - 1][0];
-  const t = Math.max(first + 2, Math.min(last - 2, tSec));
-  const [lon1, lat1] = interpolatePos(wpts, t - 2);
-  const [lon2, lat2] = interpolatePos(wpts, t + 2);
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-  return Math.atan2(
-    Math.sin(dLon) * Math.cos(φ2),
-    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dLon)
-  );
-}
-
 function followCamera() {
-  const { entityId, wpts } = getActiveVehicle();
+  const { entityId } = getActiveVehicle();
   const ds = viewer.dataSources.get(0);
   if (!ds) return;
   const entity = ds.entities.getById(entityId);
   if (!entity) return;
-  const pos = entity.position?.getValue(viewer.clock.currentTime)
-           ?? Cesium.Cartesian3.fromDegrees(-97.157, 25.997, 20);
+  const target = entity.position?.getValue(viewer.clock.currentTime)
+              ?? Cesium.Cartesian3.fromDegrees(-97.157, 25.997, 20);
 
-  const tSec = t0Ms ? (Date.now() - t0Ms) / 1000 : 0;
-  const heading = getHeadingAtTime(wpts, tSec);
-
+  // Cartesian3 offset is in local ENU at target: (East, North, Up).
+  // Negative North = camera sits south of vehicle → always looks north.
   if (cameraMode === 'horizon') {
-    // 200 km behind vehicle, 12° above horizon
-    viewer.camera.lookAt(pos,
-      new Cesium.HeadingPitchRange(heading + Math.PI, Cesium.Math.toRadians(-12), 200_000));
+    viewer.camera.lookAt(target, new Cesium.Cartesian3(0, -130_000, 12_000));
   } else if (cameraMode === 'orbit') {
-    // 350 km to the side, tangent to travel direction
-    viewer.camera.lookAt(pos,
-      new Cesium.HeadingPitchRange(heading + Math.PI / 2, Cesium.Math.toRadians(-18), 350_000));
+    viewer.camera.lookAt(target, new Cesium.Cartesian3(0, -380_000, 80_000));
   }
 }
 
