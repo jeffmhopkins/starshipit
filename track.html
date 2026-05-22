@@ -233,54 +233,63 @@ function densify(wpts, maxDt) {
 
 // Shared boost phase (T=0 → stage sep at T=170).
 // Both vehicles fly this identical path; densified to 5 s for smooth rendering.
-// Flight 12, V3 from Pad 2: NNE over Gulf of Mexico, stage sep at 28°N.
+//
+// Flight 12 (May 2026, V3, Pad 2) actual published trajectory:
+//   Heading ESE (~110° azimuth) over Gulf of Mexico.
+//   Ship threads between Jamaica & Cuba (~-79°W, 19.7°N) at SECO,
+//   then between St. Vincent & Grenada (~-61.5°W, 12.7°N) in the Leeward Islands,
+//   then southeast to Indian Ocean off Western Australia (~110°E, 33°S) at T+65 min.
+//   Booster does boostback and splashes in Gulf ~120 km south of pad at T+7 min.
+//   Source: NSF/SpaceCom reporting on revised southerly corridor, May 2026.
 const BOOST_CTL = [
-  [  0, -97.157, 25.997,     0],  // Liftoff
-  [ 10, -97.150, 26.010,  1200],
-  [ 20, -97.135, 26.045,  4500],
-  [ 30, -97.110, 26.100,  9500],
-  [ 45, -97.065, 26.190, 18000],  // Max-Q
-  [ 60, -96.995, 26.320, 28000],
-  [ 80, -96.880, 26.520, 41000],
-  [100, -96.730, 26.780, 52000],
-  [120, -96.540, 27.080, 61000],
-  [140, -96.310, 27.410, 68000],
-  [160, -96.050, 27.760, 73000],  // MECO
-  [170, -95.850, 28.000, 75000],  // Stage Sep
+  [  0, -97.157, 25.997,     0],  // Liftoff (Starbase, Pad 2)
+  [ 10, -97.145, 25.994,  1200],
+  [ 20, -97.110, 25.980,  4500],
+  [ 30, -97.030, 25.951,  9500],
+  [ 45, -96.875, 25.893, 18000],  // Max-Q
+  [ 60, -96.655, 25.813, 28000],
+  [ 80, -96.310, 25.688, 41000],
+  [100, -95.935, 25.550, 52000],
+  [120, -95.500, 25.390, 61000],
+  [140, -95.035, 25.218, 68000],
+  [160, -94.535, 25.033, 73000],  // MECO
+  [170, -94.040, 24.850, 75000],  // Stage Sep
 ];
 const BOOST_DENSE = densify(BOOST_CTL, 5);  // ~34 points at ≤5 s intervals
 
 const BOOSTER = [
   ...BOOST_DENSE,
-  [190, -96.050, 27.700, 68000],  // Boostback ignition
-  [220, -96.300, 27.200, 55000],
-  [250, -96.550, 26.700, 42000],
-  [280, -96.750, 26.200, 31000],
-  [310, -96.900, 25.800, 21000],
-  [340, -96.950, 25.400, 12000],  // Entry burn
-  [370, -96.980, 25.100,  4500],
-  [400, -97.000, 24.900,   800],
-  [420, -97.020, 24.800,     0],  // Gulf splashdown (~120 km south of pad)
+  [190, -93.480, 24.665, 80000],  // Boostback ignition (brief coast then burn)
+  [220, -93.780, 24.720, 74000],
+  [250, -94.200, 24.780, 62000],
+  [280, -94.800, 24.820, 50000],
+  [310, -95.500, 24.850, 38000],
+  [340, -96.100, 24.870, 26000],  // Entry burn
+  [370, -96.600, 24.885, 13000],
+  [400, -96.900, 24.893,  4000],
+  [420, -97.100, 24.900,     0],  // Gulf of Mexico splashdown (~120 km south of pad)
 ];
 
 const SHIP = [
   ...BOOST_DENSE,  // shared pre-sep phase at 5 s resolution
-  [ 200, -94.800, 27.900,  95000],
-  [ 250, -93.200, 27.200, 120000],
-  [ 300, -91.500, 26.300, 140000],
-  [ 350, -89.800, 25.100, 150000],
-  [ 400, -88.000, 23.800, 155000],
-  [ 450, -86.000, 22.500, 158000],  // Apogee, threading Yucatan Channel
-  [ 510, -83.500, 21.500, 155000],  // SECO
-  [ 800, -75.000, 18.000, 140000],
-  [1200, -55.000,  8.000, 120000],
-  [1800, -30.000, -5.000,  90000],
-  [2400,  -5.000,-18.000,  65000],  // Reentry interface
-  [2700,  20.000,-25.000,  45000],  // Reentry burn
-  [3000,  45.000,-30.000,  25000],
-  [3300,  65.000,-33.000,  12000],
-  [3600,  78.000,-34.000,   3000],
-  [3660,  82.000,-34.200,     0],   // Indian Ocean splashdown
+  [ 200, -92.700, 24.400,  90000],
+  [ 250, -90.400, 23.600, 115000],
+  [ 300, -88.100, 22.900, 135000],
+  [ 350, -85.800, 22.100, 147000],
+  [ 420, -82.600, 21.000, 154000],
+  [ 507, -78.500, 19.700, 155000],  // SECO — threads between Jamaica (18.5°N) & Cuba (20°N)
+  [ 800, -61.500, 12.700, 160000],  // threads between St. Vincent & Grenada
+  [1100, -38.500,  7.800, 163000],
+  [1400, -17.500,  3.100, 163000],  // Near apogee
+  [1700,   3.500, -1.700, 161000],
+  [2000,  25.000, -6.400, 158000],
+  [2300,  46.000,-11.100, 150000],
+  [2600,  67.000,-15.800, 117000],
+  [2833,  83.000,-19.500,  75000],  // Reentry interface (T+47:13, per IFT-6 profile)
+  [3100,  93.000,-26.000,  25000],
+  [3400, 103.000,-30.000,   8000],
+  [3700, 108.000,-32.000,   1500],
+  [3900, 110.000,-33.000,      0],  // Indian Ocean splashdown off Western Australia
 ];
 
 function toCzmlPositions(wpts) {
@@ -308,9 +317,9 @@ const FLIGHT_EVENTS = [
   ['Stage Sep',     170,   SHIP,    [ 68, -14]],
   ['Boostback Burn',190,   BOOSTER, [  0,  18]],
   ['Entry Burn',    340,   BOOSTER, [  0, -20]],
-  ['Ship SECO',     510,   SHIP,    [  0, -20]],
-  ['Reentry Burn', 2700,   SHIP,    [  0,  18]],
-  ['Splashdown',   3660,   SHIP,    [  0, -20]],
+  ['Ship SECO',     507,   SHIP,    [  0, -20]],
+  ['Reentry',      2833,   SHIP,    [  0,  18]],
+  ['Splashdown',   3900,   SHIP,    [  0, -20]],
 ];
 
 function addEventMarkers() {
