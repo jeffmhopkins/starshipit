@@ -263,7 +263,7 @@
   </div>
 </div>
 
-<a href="/track.html" class="track-link">3D Track ↗</a>
+<a href="/track.html" class="track-link">3D Track ↗<span id="t0-local"></span></a>
 
 <div id="timeline-view">
   <ul class="timeline-list" id="timeline-list"></ul>
@@ -470,6 +470,8 @@ async function init() {
     const launch = data.results[0];
     t0 = new Date(launch.net).getTime();
     document.getElementById('mission-name').textContent = launch.name;
+    document.getElementById('t0-local').textContent =
+      '  ·  T-0: ' + new Date(t0).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' local';
     statusEl.style.display = 'none';
 
     if (t0 - Date.now() <= TWO_DAYS_MS) {
