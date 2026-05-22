@@ -210,7 +210,30 @@ viewer.scene.globe.enableLighting = true;
 // ── Nominal trajectory waypoints [T+sec, lon°, lat°, alt_m] ────────────
 // Approximate IFT profile based on SpaceX webcast telemetry
 
-const BOOSTER = [
+// Densify: insert linearly-interpolated points so no segment exceeds maxDt.
+// Called at build-time so runtime arrays are already fully expanded.
+function densify(wpts, maxDt) {
+  const out = [wpts[0]];
+  for (let i = 1; i < wpts.length; i++) {
+    const [t0, lon0, lat0, alt0] = wpts[i - 1];
+    const [t1, lon1, lat1, alt1] = wpts[i];
+    const n = Math.ceil((t1 - t0) / maxDt);
+    for (let s = 1; s <= n; s++) {
+      const f = s / n;
+      out.push([
+        t0 + f * (t1 - t0),
+        lon0 + f * (lon1 - lon0),
+        lat0 + f * (lat1 - lat0),
+        Math.round(alt0 + f * (alt1 - alt0)),
+      ]);
+    }
+  }
+  return out;
+}
+
+// Shared boost phase (T=0 → stage sep at T=170).
+// Both vehicles fly this identical path; densified to 5 s for smooth rendering.
+const BOOST_CTL = [
   [   0, -97.157, 25.997,    20],  // Liftoff
   [  15, -97.120, 25.993,  1500],
   [  30, -97.050, 25.988,  5500],
@@ -222,7 +245,12 @@ const BOOSTER = [
   [ 140, -96.040, 25.715, 59000],
   [ 160, -95.810, 25.600, 68000],
   [ 164, -95.760, 25.568, 69000],  // MECO
-  [ 170, -95.710, 25.520, 70500],  // Stage Sep / Boostback Ignition
+  [ 170, -95.710, 25.520, 70500],  // Stage Sep
+];
+const BOOST_DENSE = densify(BOOST_CTL, 5);  // ~34 points at ≤5 s intervals
+
+const BOOSTER = [
+  ...BOOST_DENSE,
   [ 185, -95.648, 25.477, 74000],  // Boostback burn
   [ 200, -95.595, 25.440, 78500],
   [ 220, -95.560, 25.408, 84000],
@@ -240,18 +268,7 @@ const BOOSTER = [
 ];
 
 const SHIP = [
-  [    0, -97.157, 25.997,    20],  // Liftoff
-  [   15, -97.120, 25.993,  1500],
-  [   30, -97.050, 25.988,  5500],
-  [   45, -96.960, 25.975,  9800],  // Max-Q
-  [   60, -96.845, 25.958, 13500],
-  [   80, -96.690, 25.928, 22000],
-  [  100, -96.490, 25.880, 34000],
-  [  120, -96.270, 25.810, 47000],
-  [  140, -96.040, 25.715, 59000],
-  [  160, -95.810, 25.600, 68000],
-  [  164, -95.760, 25.568, 69000],  // MECO / Hot-Stage
-  [  170, -95.710, 25.520, 70500],  // Stage Sep
+  ...BOOST_DENSE,  // shared pre-sep phase at 5 s resolution
   [  200, -95.010, 25.220, 88000],
   [  240, -93.820, 24.720,112000],
   [  290, -92.120, 23.920,133000],
