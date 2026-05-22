@@ -99,17 +99,26 @@
       flex-shrink: 0;
     }
 
-    /* ── Track link ── */
-    .track-link {
-      display: block;
-      text-align: center;
+    /* ── Track row ── */
+    .track-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
       font-size: 12px;
       color: var(--muted);
-      text-decoration: none;
       padding: 4px 0 8px;
       letter-spacing: 0.03em;
     }
-    .track-link:hover { color: var(--accent); }
+    .track-link {
+      color: var(--accent);
+      text-decoration: none;
+      border: 1px solid rgba(88,166,255,0.35);
+      border-radius: 4px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+    .track-link:hover { border-color: var(--accent); }
 
     /* ── Timeline ── */
     .timeline-list {
@@ -263,7 +272,10 @@
   </div>
 </div>
 
-<a href="/track.html" class="track-link">3D Track ↗<span id="t0-local"></span></a>
+<div class="track-row">
+  <span id="t0-local">Launch Attempt at — local</span>
+  <a href="/track.html" class="track-link">3D Track ↗</a>
+</div>
 
 <div id="timeline-view">
   <ul class="timeline-list" id="timeline-list"></ul>
@@ -471,7 +483,7 @@ async function init() {
     t0 = new Date(launch.net).getTime();
     document.getElementById('mission-name').textContent = launch.name;
     document.getElementById('t0-local').textContent =
-      '  ·  T-0: ' + new Date(t0).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' local';
+      'Launch Attempt at ' + new Date(t0).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' local';
     statusEl.style.display = 'none';
 
     if (t0 - Date.now() <= TWO_DAYS_MS) {
