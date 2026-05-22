@@ -442,30 +442,42 @@ function addPlannedPaths() {
 const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 let cameraMode = 'globe';
 let trackHandler = null;
+let lastEntityPos = null;
 
 function getActiveVehicle() {
   const tSec = t0Ms ? (Date.now() - t0Ms) / 1000 : -9999;
-  return tSec < 420
-    ? { entityId: 'booster', wpts: BOOSTER }
-    : { entityId: 'ship',    wpts: SHIP };
+  return tSec < 420 ? 'booster' : 'ship';
 }
 
-function followCamera() {
-  const { entityId } = getActiveVehicle();
+function getTrackedPos() {
   const ds = viewer.dataSources.get(0);
-  if (!ds) return;
-  const entity = ds.entities.getById(entityId);
-  if (!entity) return;
-  const target = entity.position?.getValue(viewer.clock.currentTime)
-              ?? Cesium.Cartesian3.fromDegrees(-97.157, 25.997, 20);
+  if (!ds) return null;
+  const entity = ds.entities.getById(getActiveVehicle());
+  if (!entity) return null;
+  return entity.position?.getValue(viewer.clock.currentTime)
+      ?? Cesium.Cartesian3.fromDegrees(-97.157, 25.997, 20);
+}
 
-  // Cartesian3 offset is in local ENU at target: (East, North, Up).
-  // Negative North = camera sits south of vehicle → always looks north.
-  if (cameraMode === 'horizon') {
-    viewer.camera.lookAt(target, new Cesium.Cartesian3(0, -130_000, 12_000));
-  } else if (cameraMode === 'orbit') {
-    viewer.camera.lookAt(target, new Cesium.Cartesian3(0, -380_000, 80_000));
+// Translate the camera by the same delta as the entity each frame.
+// This keeps the vehicle in frame without touching heading/pitch,
+// so any user rotation or zoom survives between frames.
+function followCamera() {
+  const currentPos = getTrackedPos();
+  if (!currentPos) return;
+
+  if (lastEntityPos) {
+    const delta = Cesium.Cartesian3.subtract(currentPos, lastEntityPos, new Cesium.Cartesian3());
+    viewer.camera.position = Cesium.Cartesian3.add(
+      viewer.camera.position, delta, new Cesium.Cartesian3()
+    );
   }
+  lastEntityPos = Cesium.Cartesian3.clone(currentPos);
+}
+
+function startTracking() {
+  lastEntityPos = null; // skip delta on first frame to avoid jump
+  trackHandler = followCamera;
+  viewer.scene.postRender.addEventListener(trackHandler);
 }
 
 function updateViewButtons(mode) {
@@ -477,20 +489,33 @@ function updateViewButtons(mode) {
 function setCameraMode(mode) {
   cameraMode = mode;
   updateViewButtons(mode);
-  viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); // release lookAt lock
+  viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); // release any existing lock
+
   if (trackHandler) {
     viewer.scene.postRender.removeEventListener(trackHandler);
     trackHandler = null;
   }
+
   if (mode === 'globe') {
+    // Fly to overview, then begin delta-tracking so vehicle stays in frame
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(-80, 22, 13_500_000),
       duration: 1.5,
+      complete: startTracking,
     });
-  } else {
-    trackHandler = followCamera;
-    viewer.scene.postRender.addEventListener(trackHandler);
+    return;
   }
+
+  // Horizon / Orbit: set the initial view with lookAt, then immediately
+  // release the lock so the user can freely rotate/zoom from that position.
+  const target = getTrackedPos() ?? Cesium.Cartesian3.fromDegrees(-97.157, 25.997, 20);
+  const offset = mode === 'horizon'
+    ? new Cesium.Cartesian3(0, -130_000, 12_000)   // 130 km south, 12 km above
+    : new Cesium.Cartesian3(0, -380_000, 80_000);  // 380 km south, 80 km above
+
+  viewer.camera.lookAt(target, offset); // positions camera
+  viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); // release lock → free rotation
+  startTracking(); // translate camera with entity from here on
 }
 
 // ── T± overlay clock ────────────────────────────────────────────────────
