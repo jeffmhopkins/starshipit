@@ -234,13 +234,13 @@ function densify(wpts, maxDt) {
 // Shared boost phase (T=0 → stage sep at T=170).
 // Both vehicles fly this identical path; densified to 5 s for smooth rendering.
 //
-// Flight 12 (May 2026, V3, Pad 2) actual published trajectory:
+// Flight 13 (Jul 2026, V3 2nd flight, Pad 2) published trajectory:
 //   Heading ESE (~110° azimuth) over Gulf of Mexico.
-//   Ship threads between Jamaica & Cuba (~-79°W, 19.7°N) at SECO,
+//   Ship threads between Jamaica & Cuba (~-79°W, 19.7°N) around SECO,
 //   then between St. Vincent & Grenada (~-61.5°W, 12.7°N) in the Leeward Islands,
 //   then southeast to Indian Ocean off Western Australia (~110°E, 33°S) at T+65 min.
-//   Booster does boostback and splashes in Gulf ~120 km south of pad at T+7 min.
-//   Source: NSF/SpaceCom reporting on revised southerly corridor, May 2026.
+//   Booster does boostback and splashes in Gulf ~120 km south of pad at T+6:53.
+//   Source: SpaceX Flight 13 flight plan (corroborated by Wikipedia / NSF), Jul 2026.
 const BOOST_CTL = [
   [  0, -97.157, 25.997,     0],  // Liftoff (Starbase, Pad 2)
   [ 10, -97.145, 25.994,  1200],
@@ -259,7 +259,7 @@ const BOOST_DENSE = densify(BOOST_CTL, 5);  // ~34 points at ≤5 s intervals
 
 const BOOSTER = [
   ...BOOST_DENSE,
-  [190, -93.480, 24.665, 80000],  // Boostback ignition (brief coast then burn)
+  [190, -93.480, 24.665, 80000],  // Apogee after boostback burn (T+2:25–3:03)
   [220, -93.780, 24.720, 74000],
   [250, -94.200, 24.780, 62000],
   [280, -94.800, 24.820, 50000],
@@ -277,7 +277,7 @@ const SHIP = [
   [ 300, -88.100, 22.900, 135000],
   [ 350, -85.800, 22.100, 147000],
   [ 420, -82.600, 21.000, 154000],
-  [ 507, -78.500, 19.700, 155000],  // SECO — threads between Jamaica (18.5°N) & Cuba (20°N)
+  [ 485, -79.300, 19.900, 155000],  // SECO T+8:05 — threads between Jamaica (18.5°N) & Cuba (20°N)
   [ 800, -61.500, 12.700, 160000],  // threads between St. Vincent & Grenada
   [1100, -38.500,  7.800, 163000],
   [1400, -17.500,  3.100, 163000],  // Near apogee
@@ -285,11 +285,11 @@ const SHIP = [
   [2000,  25.000, -6.400, 158000],
   [2300,  46.000,-11.100, 150000],
   [2600,  67.000,-15.800, 117000],
-  [2833,  83.000,-19.500,  75000],  // Reentry interface (T+47:13, per IFT-6 profile)
+  [2850,  83.000,-19.500,  75000],  // Reentry interface (T+47:30, per Flight 13 plan)
   [3100,  93.000,-26.000,  25000],
   [3400, 103.000,-30.000,   8000],
   [3700, 108.000,-32.000,   1500],
-  [3900, 110.000,-33.000,      0],  // Indian Ocean splashdown off Western Australia
+  [3921, 110.000,-33.000,      0],  // Indian Ocean splashdown off Western Australia (T+1:05:21)
 ];
 
 function toCzmlPositions(wpts) {
@@ -311,15 +311,16 @@ function interpolatePos(wpts, tSec) {
 }
 
 // [label, T+sec, waypoint array, pixel label offset [x,y]]
+// T+ times from the official SpaceX Flight 13 flight plan.
 const FLIGHT_EVENTS = [
-  ['Max-Q',          45,   SHIP,    [  0, -20]],
-  ['MECO',          160,   BOOSTER, [-68, -14]],
-  ['Stage Sep',     170,   SHIP,    [ 68, -14]],
-  ['Boostback Burn',190,   BOOSTER, [  0,  18]],
-  ['Entry Burn',    340,   BOOSTER, [  0, -20]],
-  ['Ship SECO',     507,   SHIP,    [  0, -20]],
-  ['Reentry',      2833,   SHIP,    [  0,  18]],
-  ['Splashdown',   3900,   SHIP,    [  0, -20]],
+  ['Max-Q',          58,   SHIP,    [  0, -20]],   // T+0:58
+  ['MECO',          138,   BOOSTER, [-68, -14]],   // T+2:18
+  ['Stage Sep',     141,   SHIP,    [ 68, -14]],   // T+2:21
+  ['Boostback Burn',145,   BOOSTER, [  0,  18]],   // T+2:25
+  ['Landing Burn',  387,   BOOSTER, [  0, -20]],   // T+6:27
+  ['Ship SECO',     485,   SHIP,    [  0, -20]],   // T+8:05
+  ['Reentry',      2850,   SHIP,    [  0,  18]],   // T+47:30
+  ['Splashdown',   3921,   SHIP,    [  0, -20]],   // T+1:05:21
 ];
 
 function addEventMarkers() {
