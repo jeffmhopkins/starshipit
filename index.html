@@ -32,6 +32,16 @@
       overflow-x: hidden;
     }
 
+    /* ── App column ──
+       On mobile this fills the viewport; on desktop it stays a phone-width
+       column centred in the page so the content doesn't stretch edge-to-edge.
+       (The 3D track / map view in track.html is intentionally full-width.) */
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
     /* ── Mission name ── */
     .mission-name {
       font-size: 26px;
@@ -231,6 +241,8 @@
 </head>
 <body>
 
+<div class="app">
+
 <h1 class="mission-name" id="mission-name">Loading…</h1>
 
 <div class="countdown-section">
@@ -293,26 +305,42 @@
   · Data: <a href="https://thespacedevs.com">Launch Library 2</a>
 </footer>
 
+</div><!-- .app -->
+
 <script>
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
+// SpaceX Starship Flight 13 (V3, 2nd flight) official flight plan.
+// Countdown milestones plus the full ascent → deploy → relight → splashdown
+// sequence. Times from the published SpaceX flight plan (corroborated by
+// Wikipedia / SpaceLaunchSchedule / NASASpaceflight).
 const TIMELINE_EVENTS = [
-  { label: 'Go for Prop Load',  offsetSec: -(50*60)      },
-  { label: 'Ship LOX Load',     offsetSec: -(38*60 + 53) },
-  { label: 'Booster LOX Load',  offsetSec: -(35*60)      },
-  { label: 'Booster CH4 Load',  offsetSec: -(34*60 + 43) },
-  { label: 'Ship CH4 Load',     offsetSec: -(32*60 + 59) },
-  { label: 'Engine Chill',      offsetSec: -(21*60 + 30) },
-  { label: 'Booster Loaded',    offsetSec: -(2*60 + 50)  },
-  { label: 'Ship Prop Loaded',  offsetSec: -(2*60 + 10)  },
-  { label: 'FD Go for Launch',  offsetSec: -30           },
-  { label: 'Flame Diverter',    offsetSec: -17           },
-  { label: 'Engine Ignition',   offsetSec: -3            },
-  { label: 'Liftoff',           offsetSec: 0             },
-  { label: 'Max-Q',             offsetSec: 45            },
-  { label: 'MECO',              offsetSec: 2*60 + 22     },
-  { label: 'Hot-Staging',       offsetSec: 2*60 + 44     },
-  { label: 'Boostback Start',   offsetSec: 3*60 + 9      },
+  { label: 'Go for Prop Load',    offsetSec: -(50*60)      },  // T-50:00
+  { label: 'Ship LOX Load',       offsetSec: -(37*60 + 30) },  // T-37:30
+  { label: 'Booster LOX Load',    offsetSec: -(37*60)      },  // T-37:00
+  { label: 'Booster CH4 Load',    offsetSec: -(35*60 + 25) },  // T-35:25
+  { label: 'Ship CH4 Load',       offsetSec: -(34*60 + 48) },  // T-34:48
+  { label: 'Engine Chill',        offsetSec: -(21*60 + 30) },  // T-21:30
+  { label: 'Booster Loaded',      offsetSec: -(2*60 + 50)  },  // T-2:50
+  { label: 'Ship Prop Loaded',    offsetSec: -(2*60 + 10)  },  // T-2:10
+  { label: 'Go for Launch',       offsetSec: -30           },  // T-30
+  { label: 'Flame Diverter',      offsetSec: -17           },  // T-17
+  { label: 'Engine Ignition',     offsetSec: -3            },  // T-3
+  { label: 'Liftoff',             offsetSec: 0             },  // T+0
+  { label: 'Max-Q',               offsetSec: 58            },  // T+0:58
+  { label: 'MECO',                offsetSec: 2*60 + 18     },  // T+2:18
+  { label: 'Hot-Staging',         offsetSec: 2*60 + 21     },  // T+2:21
+  { label: 'Boostback Start',     offsetSec: 2*60 + 25     },  // T+2:25
+  { label: 'Boostback End',       offsetSec: 3*60 + 3      },  // T+3:03
+  { label: 'Booster Landing Burn', offsetSec: 6*60 + 27    },  // T+6:27
+  { label: 'Booster Splashdown',  offsetSec: 6*60 + 53     },  // T+6:53
+  { label: 'Ship Engine Cutoff',  offsetSec: 8*60 + 5      },  // T+8:05 (SECO)
+  { label: 'Starlink Deploy',     offsetSec: 16*60 + 40    },  // T+16:40
+  { label: 'Deploy Complete',     offsetSec: 27*60 + 39    },  // T+27:39
+  { label: 'Raptor Relight',      offsetSec: 38*60 + 58    },  // T+38:58
+  { label: 'Atmospheric Entry',   offsetSec: 47*60 + 30    },  // T+47:30
+  { label: 'Ship Landing Burn',   offsetSec: 65*60 + 1     },  // T+1:05:01
+  { label: 'Ship Splashdown',     offsetSec: 65*60 + 21    },  // T+1:05:21
 ];
 
 const CHECKLIST = [
