@@ -32,6 +32,16 @@
       overflow-x: hidden;
     }
 
+    /* ── App column ──
+       On mobile this fills the viewport; on desktop it stays a phone-width
+       column centred in the page so the content doesn't stretch edge-to-edge.
+       (The 3D track / map view in track.html is intentionally full-width.) */
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
     /* ── Mission name ── */
     .mission-name {
       font-size: 26px;
@@ -231,6 +241,8 @@
 </head>
 <body>
 
+<div class="app">
+
 <h1 class="mission-name" id="mission-name">Loading…</h1>
 
 <div class="countdown-section">
@@ -292,6 +304,8 @@
   <a href="https://github.com/jeffmhopkins/starshipit">GitHub</a>
   · Data: <a href="https://thespacedevs.com">Launch Library 2</a>
 </footer>
+
+</div><!-- .app -->
 
 <script>
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
