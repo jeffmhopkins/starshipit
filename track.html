@@ -234,14 +234,17 @@ function densify(wpts, maxDt) {
 // Shared boost phase (T=0 → stage sep at T=170).
 // Both vehicles fly this identical path; densified to 5 s for smooth rendering.
 //
-// Flight 14 (Sep 2026, V3 3rd flight, Pad 2) — first orbital Starship flight:
-//   Heading ESE (~105° azimuth) over the Gulf of Mexico into a ~275 km,
-//   ~30° inclination orbit. Ship threads between Jamaica & Cuba around SECO,
-//   inserts into orbit at T+25:28, deploys 26 Starlink V3 satellites, flies
-//   ~6 orbits, deorbits at T+8:52:18 and splashes down in the Pacific west of
-//   Chile at T+9:50:30. Booster boosts back and splashes in the Gulf at T+7:01.
-//   Sources: SpaceX Flight 14 flight plan (via Launch Library 2), Wikipedia,
-//   Spaceflight Now (inclination), Sep 2026.
+// Flight 15 (NET mid-Nov 2026, Booster 22 / Ship 42) — first attempt to
+//   return BOTH stages to the launch site and catch them on the Starbase tower.
+//   SpaceX has not published a Flight 15 timeline yet, so this is a nominal
+//   profile built on the Flight 14 ascent and orbit (ESE, ~275 km, ~30°):
+//   - Booster: same V3 ascent/staging times as Flight 14, but a full RTLS
+//     boostback that brings it back over the coast to a tower catch at T+7:01.
+//   - Ship: orbit insertion as on Flight 14, then stays up ~1 day until its
+//     descending pass comes back over Starbase (~T+24h), entering from the
+//     Pacific over Mexico with a ~100 km cross-range correction onto the tower.
+//   Sources: Flight 14 flight plan (via Launch Library 2); Flight 15 double-catch
+//   plans reported by Space.com / NASASpaceflight / Tech Insider, Oct–Nov 2026.
 const BOOST_CTL = [
   [  0, -97.157, 25.997,     0],  // Liftoff (Starbase, Pad 2)
   [ 10, -97.145, 25.994,  1200],
@@ -260,16 +263,18 @@ const BOOST_DENSE = densify(BOOST_CTL, 5);  // ~34 points at ≤5 s intervals
 
 const BOOSTER = [
   ...BOOST_DENSE,
-  [190, -93.480, 24.665, 80000],  // Apogee after boostback burn (T+2:27–3:07)
-  [220, -93.780, 24.720, 74000],
-  [250, -94.200, 24.780, 62000],
-  [280, -94.800, 24.820, 50000],
-  [310, -95.500, 24.850, 38000],
-  [340, -96.100, 24.870, 26000],  // Entry burn
-  [370, -96.600, 24.885, 13000],
-  [400, -96.900, 24.893,  4000],
-  [421, -97.100, 24.900,     0],  // Gulf of Mexico splashdown (T+7:01)
+  [190, -93.600, 24.700, 82000],  // Boostback burn (T+2:27–3:07) reverses downrange drift
+  [220, -93.900, 24.850, 88000],  // Apogee, now heading back toward Starbase
+  [250, -94.400, 25.050, 84000],
+  [280, -95.000, 25.300, 72000],
+  [310, -95.600, 25.550, 56000],
+  [340, -96.150, 25.760, 38000],  // Entry burn
+  [370, -96.650, 25.910, 18000],
+  [395, -96.980, 25.980,  4000],  // Landing burn
+  [410, -97.120, 25.995,   700],
+  [421, -97.157, 25.997,   120],  // Tower catch at Starbase (T+7:01)
 ];
+const T_BOOSTER_CATCH = BOOSTER.at(-1)[0];
 
 // ── Orbital phase: analytic ground track of a circular orbit ────────────
 // Longitudes are left unwrapped (may exceed ±180°) so interpolation never
@@ -297,15 +302,37 @@ function groundTrack(tau) {
   return [lon * 180 / Math.PI, lat * 180 / Math.PI];
 }
 
-// Key ship times (T+ s) from the Flight 14 flight plan
+// Ground-track time covered from entry to landing (vehicle decelerates,
+// so less than the real-time entry duration).
+const ENTRY_TRACK_SEC = 900;
+
+// Find the descending pass that recrosses Starbase's latitude about a day
+// after launch (~T+24h, ~100 km west of the tower). The ship's entry ends there.
+function findReturnPass(lo, hi) {
+  const lat = tau => groundTrack(tau)[1] - 25.997;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (lat(mid) > 0) lo = mid; else hi = mid;   // descending: lat falls through
+  }
+  return (lo + hi) / 2;
+}
+const TAU_RETURN = findReturnPass(86000, 86700);
+
+// Key ship times (T+ s). Ascent/insertion from the Flight 14 flight plan;
+// deorbit → entry → catch durations reused from Flight 14, re-timed so the
+// entry ground track ends on the return pass.
 const T_SECO      = 491;     // T+8:11
 const T_INSERTION = 1528;    // T+25:28
-const T_DEORBIT   = 31938;   // T+8:52:18
-const T_ENTRY     = 34132;   // T+9:28:52
-const T_SPLASH    = 35430;   // T+9:50:30
-// Ground-track time covered from entry to splashdown (vehicle decelerates,
-// so less than the orbital T_SPLASH - T_ENTRY) — lands ~88°W, 30°S.
-const ENTRY_TRACK_SEC = 900;
+const T_ENTRY     = Math.round(TAU_RETURN + ORBIT_LAG - ENTRY_TRACK_SEC);
+const T_DEORBIT   = T_ENTRY - 2194;
+const T_CATCH     = T_ENTRY + 1298;
+
+// Cross-range correction blended in during entry, so the natural ground track
+// end point is steered onto the tower.
+// Longitudes are unwrapped, so wrap the lon delta into ±180°.
+const [RET_LON, RET_LAT] = groundTrack(T_ENTRY - ORBIT_LAG + ENTRY_TRACK_SEC);
+const XR_DLON = ((-97.157 - RET_LON) % 360 + 540) % 360 - 180;
+const XR_DLAT = 25.997 - RET_LAT;
 
 const ease = f => (1 - Math.cos(Math.PI * f)) / 2;
 
@@ -318,11 +345,13 @@ function shipOrbitPoint(t) {
   } else if (t <= T_ENTRY) {
     alt = ORBIT_ALT_M - (ORBIT_ALT_M - 120_000) * ease((t - T_DEORBIT) / (T_ENTRY - T_DEORBIT));
   } else {
-    // Cubic time remap: starts at orbital ground speed, stops at splashdown
-    const D = T_SPLASH - T_ENTRY, s = (t - T_ENTRY) / D;
+    // Cubic time remap: starts at orbital ground speed, stops at the tower
+    const D = T_CATCH - T_ENTRY, s = (t - T_ENTRY) / D;
     const a = D / ENTRY_TRACK_SEC, c = a - 2, b = 1 - a - c;
     tau = T_ENTRY - ORBIT_LAG + ENTRY_TRACK_SEC * (a * s + b * s * s + c * s * s * s);
-    alt = 120_000 * Math.pow(1 - s, 1.5);
+    alt = 120 + (120_000 - 120) * Math.pow(1 - s, 1.5);
+    const [lon, lat] = groundTrack(tau), k = ease(s);
+    return [t, lon + k * XR_DLON, lat + k * XR_DLAT, Math.round(alt)];
   }
   const [lon, lat] = groundTrack(tau);
   return [t, lon, lat, Math.round(alt)];
@@ -330,8 +359,10 @@ function shipOrbitPoint(t) {
 
 function buildOrbitPhase(step) {
   const out = [];
-  for (let t = T_SECO; t < T_SPLASH; t += step) out.push(shipOrbitPoint(t));
-  out.push(shipOrbitPoint(T_SPLASH));
+  for (let t = T_SECO; t < T_ENTRY; t += step) out.push(shipOrbitPoint(t));
+  // Finer steps through entry for a smooth final approach to the tower
+  for (let t = T_ENTRY; t < T_CATCH; t += 10) out.push(shipOrbitPoint(t));
+  out.push(shipOrbitPoint(T_CATCH));
   return out;
 }
 
@@ -342,7 +373,7 @@ const SHIP = [
   [ 300, -88.100, 22.900, 135000],
   [ 350, -85.800, 22.100, 147000],
   [ 420, -82.600, 21.000, 154000],
-  ...buildOrbitPhase(30),  // SECO T+8:11 → ~6 orbits → splashdown west of Chile
+  ...buildOrbitPhase(30),  // SECO T+8:11 → ~16 orbits → tower catch at Starbase
 ];
 
 function toCzmlPositions(wpts) {
@@ -364,19 +395,20 @@ function interpolatePos(wpts, tSec) {
 }
 
 // [label, T+sec, waypoint array, pixel label offset [x,y]]
-// T+ times from the official SpaceX Flight 14 flight plan.
+// Ascent T+ times from the Flight 14 plan; return times are nominal (see above).
 const FLIGHT_EVENTS = [
   ['Max-Q',          58,   SHIP,    [  0, -20]],   // T+0:58
   ['MECO',          140,   BOOSTER, [-68, -14]],   // T+2:20
   ['Stage Sep',     142,   SHIP,    [ 68, -14]],   // T+2:22
   ['Boostback Burn',147,   BOOSTER, [  0,  18]],   // T+2:27
-  ['Landing Burn',  395,   BOOSTER, [  0, -20]],   // T+6:35
+  ['Landing Burn',  395,   BOOSTER, [-80,   0]],   // T+6:35
+  ['Booster Catch', T_BOOSTER_CATCH, BOOSTER, [ 0, 32]],  // T+7:01
   ['Ship SECO',     T_SECO,      SHIP, [  0, -20]],   // T+8:11
   ['Orbit Insertion', T_INSERTION, SHIP, [  0, -20]], // T+25:28
   ['Starlink Deploy', 2058,      SHIP, [  0,  18]],   // T+34:18
   ['Deorbit Burn',  T_DEORBIT,   SHIP, [  0, -20]],   // T+8:52:18
-  ['Reentry',       T_ENTRY,     SHIP, [  0,  18]],   // T+9:28:52
-  ['Splashdown',    T_SPLASH,    SHIP, [  0, -20]],   // T+9:50:30
+  ['Reentry',       T_ENTRY,     SHIP, [  0,  18]],   // ~T+23:49
+  ['Ship Catch',    T_CATCH,     SHIP, [  0,  46]],   // ~T+24:10
 ];
 
 function addEventMarkers() {
@@ -442,7 +474,7 @@ function buildCzml(t0Iso, name) {
         material: { solidColor: { color: { rgba: [88,166,255,255] } } },
         width: 4,
         leadTime: 0,
-        trailTime: 40000
+        trailTime: 100000
       },
       point: {
         color: { rgba: [88,166,255,255] },
@@ -465,7 +497,7 @@ function buildCzml(t0Iso, name) {
         material: { solidColor: { color: { rgba: [63,185,80,255] } } },
         width: 4,
         leadTime: 0,
-        trailTime: 40000
+        trailTime: 100000
       },
       point: {
         color: { rgba: [63,185,80,255] },
@@ -515,7 +547,7 @@ let lastEntityPos = null;
 
 function getActiveVehicle() {
   const tSec = t0Ms ? (Date.now() - t0Ms) / 1000 : -9999;
-  return tSec < 421 ? 'booster' : 'ship';
+  return tSec < T_BOOSTER_CATCH ? 'booster' : 'ship';
 }
 
 function getTrackedPos() {
